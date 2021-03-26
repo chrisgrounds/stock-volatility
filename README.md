@@ -1,6 +1,6 @@
 # Stock Volatility
 
-![Screenshot]("./screenshot.png)
+![Screenshot](./screenshot.png)
 
 ```python
 python3 ./main.py TSLA
