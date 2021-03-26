@@ -1,5 +1,6 @@
 
 import pandas as pd
+import sys
 from datetime import datetime
 
 from yahoo_fin import stock_info
@@ -7,7 +8,7 @@ from yahoo_fin import stock_info
 from calculate import calculate
 
 
-ticker = "TSLA"
+ticker = sys.argv[1]
 
 csvPath = f"./{ticker}-{datetime.today().strftime('%Y-%m-%d')}.csv"
 
