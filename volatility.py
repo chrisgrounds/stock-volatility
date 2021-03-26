@@ -6,17 +6,17 @@ from yahoo_fin import stock_info
 
 ticker = "TSLA"
 
-csvPath = f"./{ticker}-{datetime.today().strftime('%Y-%m-%d')}"
+csvPath = f"./{ticker}-{datetime.today().strftime('%Y-%m-%d')}.csv"
 
 stockDf = None
 
 try:
     stockDf = pd.read_csv(csvPath)
-    print(f"Reading from CSV {csvPath}")
+    print(f"Reading from CSV {csvPath}\n")
 except:
     stockDf = stock_info.get_data(ticker)
     stockDf.to_csv(csvPath)
-    print(f"Reading from Yahoo Finance and saving to {csvPath}")
+    print(f"Querying Yahoo Finance and saving to {csvPath}\n")
 
 
 def calculateChanges(days):
@@ -41,13 +41,9 @@ def calculateChanges(days):
     return pd.DataFrame(volatilityMeasurements)[-180:]
 
 
-dailyVolatilityDf = calculateChanges(1)
-weeklyVolatilityDf = calculateChanges(7)
-monthlyVolatilityDf = calculateChanges(30)
-
-dailyPercentChanges = [x for x in dailyVolatilityDf["percent_change"]]
-weeklyPercentChanges = [x for x in weeklyVolatilityDf["percent_change"]]
-monthlyPercentChanges = [x for x in monthlyVolatilityDf["percent_change"]]
+dailyPercentChanges = [x for x in calculateChanges(1)["percent_change"]]
+weeklyPercentChanges = [x for x in calculateChanges(7)["percent_change"]]
+monthlyPercentChanges = [x for x in calculateChanges(30)["percent_change"]]
 
 dailyAvgPercentChange = round(
     sum(dailyPercentChanges) / len(dailyPercentChanges), 2)
@@ -57,7 +53,7 @@ monthlyAvgPercentChange = round(
     sum(monthlyPercentChanges) / len(monthlyPercentChanges), 2)
 
 
-print(monthlyVolatilityDf)
+print(calculateChanges(30))
 print(f"{ticker} Daily volatility: {dailyAvgPercentChange}%")
 print(f"{ticker} Weekly volatility: {weeklyAvgPercentChange}%")
 print(f"{ticker} Monthly volatility: {monthlyAvgPercentChange}%")
