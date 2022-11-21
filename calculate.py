@@ -1,6 +1,5 @@
 import pandas as pd
 
-
 def calculate(data, days):
     volatilityMeasurements = []
     comparisonPrice = None

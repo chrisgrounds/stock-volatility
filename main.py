@@ -8,11 +8,11 @@ from calculate import calculate
 from average import average
 from ui import render
 from get_percent_change import get_percent_change
-
+from std_dev import std_dev
 
 ticker = sys.argv[1]
 
-csvPath = f"./{ticker}-{datetime.today().strftime('%Y-%m-%d')}.csv"
+csvPath = f"./data/{ticker}-{datetime.today().strftime('%Y-%m-%d')}.csv"
 
 stockDf = None
 
@@ -24,11 +24,16 @@ except:
     stockDf.to_csv(csvPath)
     print(f"Querying Yahoo Finance and saving to {csvPath}\n")
 
-dailyPercentChanges = get_percent_change(calculate(stockDf, 1))
-weeklyPercentChanges = get_percent_change(calculate(stockDf, 7))
-monthlyPercentChanges = get_percent_change(calculate(stockDf, 30))
+daily_vols = get_percent_change(calculate(stockDf, 1))
+weekly_vols = get_percent_change(calculate(stockDf, 7))
+monthly_vols = get_percent_change(calculate(stockDf, 30))
 
-print(calculate(stockDf, 30))
+daily_std_dev = std_dev(daily_vols)
+weekly_std_dev = std_dev(weekly_vols)
+monthly_std_dev = std_dev(monthly_vols)
 
-render(ticker=ticker, daily=average(dailyPercentChanges), weekly=average(
-    weeklyPercentChanges), monthly=average(monthlyPercentChanges))
+print(calculate(stockDf, 1))
+
+render(ticker=ticker, daily=average(daily_vols), weekly=average(
+    weekly_vols), monthly=average(monthly_vols), daily_std_dev=daily_std_dev, 
+    weekly_std_dev=weekly_std_dev, monthly_std_dev=monthly_std_dev)
