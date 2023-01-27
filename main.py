@@ -1,7 +1,7 @@
 import pandas as pd
 from datetime import datetime
 import argparse
-
+import matplotlib.pyplot as plt
 from yahoo_fin import stock_info
 
 from calculate import calculate
@@ -9,8 +9,7 @@ from average import average
 from ui import render
 from get_percent_change import get_percent_change
 from std_dev import std_dev
-# from update_reddit_flair import update_reddit_flair
-import matplotlib.pyplot as plt
+from moving_average import moving_average
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--ticker")
@@ -60,6 +59,15 @@ for ax in axarr.flatten():
     ax.set_title("Daily Volatility over the last " + str(limit) + " days")
     ax.set_xlabel("Daily % Volatility")
     ax.set_ylabel("Frequency")
+
+ma_50 = moving_average(stockDf, 50)["MA 50"]
+ma_200 = moving_average(stockDf, 200)["MA 200"]
+
+# print the last 5 days of the 50 and 200 day moving averages
+print("Last 5 days of 50 day moving average")
+print(ma_50[-5:])
+print("Last 5 days of 200 day moving average")
+print(ma_200[-5:])
 
 plt.show()
 

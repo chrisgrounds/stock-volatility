@@ -16,7 +16,7 @@ def calculate(data, days, limit = None):
 
         if (comparisonPrice != None):
             diff = currentDaysPrice - comparisonPrice
-            percentChange = round((diff / currentDaysPrice) * 100, 2)
+            percentChange = round((diff / comparisonPrice) * 100, 2)
             volatilityMeasurements.append(
                 { "date": date, "percent_change": percentChange }
             )
