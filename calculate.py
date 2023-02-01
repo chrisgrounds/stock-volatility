@@ -12,13 +12,12 @@ def calculate(data, days, limit = None):
             comparisonPrice = dataRange.iloc[currentRow - days]["adjclose"]
 
         currentDaysPrice = row["adjclose"]
-        date = row["Unnamed: 0"]
 
         if (comparisonPrice != None):
             diff = currentDaysPrice - comparisonPrice
             percentChange = round((diff / comparisonPrice) * 100, 2)
             volatilityMeasurements.append(
-                { "date": date, "percent_change": percentChange }
+                { "date": row["date"], "percent_change": percentChange }
             )
 
         currentRow += 1

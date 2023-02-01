@@ -28,6 +28,7 @@ try:
     print(f"Reading from CSV {csvPath}\n")
 except:
     stockDf = stock_info.get_data(ticker)
+    stockDf.index.names = ["date"]
     stockDf.to_csv(csvPath)
     print(f"Querying Yahoo Finance and saving to {csvPath}\n")
 
