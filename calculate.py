@@ -23,3 +23,4 @@ def calculate(data, days, limit = None):
         currentRow += 1
 
     return pd.DataFrame(volatilityMeasurements)
+
