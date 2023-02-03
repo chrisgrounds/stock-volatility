@@ -1,0 +1,5 @@
+datetime
+yahoo_fin
+argparse
+matplotlib
+json

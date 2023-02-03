@@ -1,0 +1,44 @@
+service: stock-data
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  region: eu-west-1
+  ecr:
+    images:
+      stock_data_updater_image:
+        path: ./
+        platform: linux/amd64
+  iam:
+    role:
+      statements:
+        - Effect: "Allow"
+          Action:
+            - dynamodb:*
+          Resource: "arn:aws:dynamodb:${self:provider.region}:*:table/*"
+
+functions:
+  stockDataUpdater:
+    image:
+      name: stock_data_updater_image
+    events:
+      - schedule: cron(00 22 * * ? *)
+    tags:
+      name: stockDataUpdater
+
+resources:
+  Resources:
+    StockDataTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: stock_data
+        AttributeDefinitions:
+          - AttributeName: date
+            AttributeType: S
+        KeySchema:
+          - AttributeName: date
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+

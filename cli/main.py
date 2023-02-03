@@ -19,7 +19,7 @@ args = parser.parse_args()
 ticker = args.ticker
 limit = args.limit
 
-csvPath = f"./data/{ticker}-{datetime.today().strftime('%Y-%m-%d')}.csv"
+csvPath = f"./../data/{ticker}-{datetime.today().strftime('%Y-%m-%d')}.csv"
 
 stockDf = None
 
@@ -32,6 +32,7 @@ except:
     stockDf.to_csv(csvPath)
     print(f"Querying Yahoo Finance and saving to {csvPath}\n")
 
+# TODO: Just merge this into stockDf
 dailyChanges = calculate(stockDf, 1, limit)
 sorteddailyChanges = dailyChanges.sort_values(by=['percent_change'])
 largestDailyChange = sorteddailyChanges.iloc[-1]
