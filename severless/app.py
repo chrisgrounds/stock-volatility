@@ -1,6 +1,5 @@
 import datetime
 import logging
-import json
 from yahoo_fin import stock_info
 import boto3
 
@@ -16,12 +15,12 @@ def handler(event, context):
     stock_df = stock_info.get_data("TSLA")
     stock_df = stock_df.rename_axis("date").reset_index()
 
-    last_row = stock_df.tail(1)
+    num_rows = len(stock_df) - 1
 
-    date = last_row["date"]
-    adjclose = last_row["adjclose"]
+    date = stock_df.at[num_rows, "date"]
+    adjclose = stock_df.at[num_rows, "adjclose"]
 
-    print(last_row)
+    print(stock_df[num_rows])
     print(date)
     print(adjclose)
 

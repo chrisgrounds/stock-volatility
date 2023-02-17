@@ -22,7 +22,7 @@ functions:
     image:
       name: stock_data_updater_image
     events:
-      - schedule: cron(00 22 * * Mon-Fri *)
+      - schedule: cron(00 22 ? * MON-FRI *)
     tags:
       name: stockDataUpdater
 
