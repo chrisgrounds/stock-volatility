@@ -16,11 +16,12 @@ def handler(event, context):
     stock_df = stock_df.rename_axis("date").reset_index()
 
     num_rows = len(stock_df) - 1
+    last_row = stock_df.iloc(-1)
 
-    date = stock_df.at[num_rows, "date"]
-    adjclose = stock_df.at[num_rows, "adjclose"]
+    date = last_row["date"]
+    adjclose = last_row["adjclose"]
 
-    print(stock_df[num_rows])
+    print(last_row)
     print(date)
     print(adjclose)
 
