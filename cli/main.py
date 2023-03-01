@@ -40,11 +40,11 @@ def to_lev_or_not_to_lev(
 ):
     print("\n-- Leverage Decision Maker --")
 
-    index_vol_annualised_below_40 = index_weekly_vol_annualised > 40
+    index_vol_annualised_below_40 = index_weekly_vol_annualised <= 40
     index_above_ma_200 = index_stock_price > index_ma_200
 
     # TODO: find relevant historical figure for ticker/tsla
-    vol_annualised_below_40 = weekly_vol_annualised > 40
+    vol_annualised_below_40 = weekly_vol_annualised <= 60
     above_ma_200 = stock_price > ma_200
 
     print(
@@ -54,7 +54,7 @@ def to_lev_or_not_to_lev(
         f"index_above_ma_200: {format_emoji(index_above_ma_200)}",
     )
     print(
-        f"vol_annualised_below_40: {format_emoji(vol_annualised_below_40)}",
+        f"vol_annualised_below_60: {format_emoji(vol_annualised_below_40)}",
     )
     print(
         f"above_ma_200: {format_emoji(above_ma_200)}",
