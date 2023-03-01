@@ -14,8 +14,8 @@ def calculate(data, days, limit = None):
         currentDaysPrice = row["adjclose"]
 
         if (comparisonPrice != None):
-            diff = currentDaysPrice - comparisonPrice
-            percentChange = round((diff / comparisonPrice) * 100, 2)
+            percentChange = 100 * ((currentDaysPrice / comparisonPrice) - 1)
+
             volatilityMeasurements.append(
                 { "date": row["date"], "percent_change": percentChange }
             )
