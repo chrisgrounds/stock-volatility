@@ -22,97 +22,147 @@ ticker = args.ticker
 limit = args.limit
 graph = args.graph
 
-csvPath = f"./../data/{ticker}-{datetime.today().strftime('%Y-%m-%d')}.csv"
 
-stockDf = None
+def format_emoji(x):
+    if x == True:
+        return "✔️"
+    else:
+        return "❌"
 
-try:
-    stockDf = pd.read_csv(csvPath)
-    print(f"Reading from CSV {csvPath}\n")
-except:
-    stockDf = stock_info.get_data(ticker)
-    stockDf = stockDf.rename_axis("date").reset_index()
-    stockDf.to_csv(csvPath)
-    print(f"Querying Yahoo Finance and saving to {csvPath}\n")
 
-stock_price = stockDf["adjclose"][-1:].values[0]
-print("The price as of last close: " + str(stock_price))
+def to_lev_or_not_to_lev(
+    weekly_vol_annualised,
+    stock_price,
+    ma_200,
+    index_weekly_vol_annualised,
+    index_stock_price,
+    index_ma_200,
+):
+    print("\n-- Leverage Decision Maker --")
 
-# TODO: Just merge this into stockDf
-dailyChanges = calculate(stockDf, 1, limit)
-sorteddailyChanges = dailyChanges.sort_values(by=['percent_change'])
-largestDailyChange = sorteddailyChanges.iloc[-1]
+    index_vol_annualised_below_40 = index_weekly_vol_annualised > 40
+    index_above_ma_200 = index_stock_price > index_ma_200
 
-daily_mean_change = get_percent_change(dailyChanges)
-weekly_mean_change = get_percent_change(calculate(stockDf, 5, limit))
-monthly_mean_change = get_percent_change(calculate(stockDf, 20, limit))
+    # TODO: find relevant historical figure for ticker/tsla
+    vol_annualised_below_40 = weekly_vol_annualised > 40
+    above_ma_200 = stock_price > ma_200
 
-daily_std_dev = std_dev(daily_mean_change)
-weekly_std_dev = std_dev(weekly_mean_change)
-monthly_std_dev = std_dev(monthly_mean_change)
+    print(
+        "index_vol_annualised_below_40: ", format_emoji(index_vol_annualised_below_40)
+    )
+    print("index_above_ma_200: ", format_emoji(index_above_ma_200))
+    print("vol_annualised_below_40: ", format_emoji(vol_annualised_below_40))
+    print("above_ma_200: ", format_emoji(above_ma_200))
 
-num_trading_days = 252
-num_weeks = 52
-num_months = 12
-daily_vol_annualised = daily_std_dev * math.sqrt(num_trading_days)
-weekly_vol_annualised = weekly_std_dev * math.sqrt(num_weeks)
-monthly_vol_annualised = monthly_std_dev * math.sqrt(num_months)
-
-sigma_move = round((largestDailyChange["percent_change"] - average(daily_mean_change)) / daily_std_dev, 2)
-
-print(sorteddailyChanges)
-
-render(ticker=ticker, daily=average(daily_mean_change), weekly=average(
-    weekly_mean_change), monthly=average(monthly_mean_change), daily_std_dev=daily_std_dev, 
-    weekly_std_dev=weekly_std_dev, monthly_std_dev=monthly_std_dev)
-
-print("The largest daily change was " + str(largestDailyChange["percent_change"]) + "% on " + str(largestDailyChange['date'] + " which was a " + str(sigma_move) + " sigma move"))
-
-axarr = dailyChanges.hist(column='percent_change', bins=100, grid=False, figsize=(12,8), color='#86bf91', zorder=2, rwidth=0.9)
-
-for ax in axarr.flatten():
-    ax.set_title("Daily Volatility over the last " + str(limit) + " days")
-    ax.set_xlabel("Daily % Volatility")
-    ax.set_ylabel("Frequency")
-
-ma_50 = moving_average(stockDf, 50)["MA 50"]
-ma_200 = moving_average(stockDf, 200)["MA 200"]
-
-print("\n50 day moving average: " + str(ma_50[-1:].values[0]))
-print("200 day moving average: " + str(ma_200[-1:].values[0]))
-
-print("\nAnnualised daily volatility: " + str(daily_vol_annualised))
-print("Annualised weekly volatility: " + str(weekly_vol_annualised))
-print("Annualised monthly volatility: " + str(monthly_vol_annualised))
-
-def to_lev_or_not_to_lev(weekly_vol_annualised, stock_price, ma_200):
-    print("\n")
-
-    # TODO: find relevant historical figure for tsla
     return weekly_vol_annualised < 40 and stock_price > ma_200
 
-print(to_lev_or_not_to_lev(weekly_vol_annualised, stock_price, ma_200))
 
-if (graph): plt.show()
+def run(ticker):
+    csvPath = f"./../data/{ticker}-{datetime.today().strftime('%Y-%m-%d')}.csv"
 
-# https://arxiv.org/pdf/1103.5672.pdf#:~:text=a%204%2Dsigma%20event%20is,in%20126%20years%20(!)%3B&text=a%205%2Dsigma%20event%20is,every%2013%2C932%20years(!!)
-# k Probability in any given day Expected occurrence: once in every
-# 3 0.135% 740.8 days
-# 4 0.00317% 31559.6 days
-# 5 0.000029% 3,483,046.3 days
-# 6 0.000000099% 1,009,976,678 days
-# 7 0.000000000129% 7.76e+11 days 
+    stockDf = None
 
-# a 3-sigma event is to be expected about every 741 days or about 1 trading day
-# in every three years;
-# • a 4-sigma event is to be expected about every 31,560 days or about 1 trading
-# day in 126 years (!);
-# • a 5-sigma event is to be expected every 3,483,046 days or about 1 day every
-# 13,932 years(!!)
-# • a 6-sigma event is to be expected every 1,009,976,678 days or about 1 day
-# every 4,039,906 years;
-# • a 7-sigma event is to be expected every 7.76e+11 days – the number of zero
-# digits is so large that Excel now reports the number of days using scientific
-# notation, and this number is to be interpreted as 7.76 days with decimal point
-# pushed back 11 places. This frequency corresponds to 1 day in 3,105,395,365
-# years.
+    try:
+        stockDf = pd.read_csv(csvPath)
+        print(f"Reading from CSV {csvPath}\n")
+    except:
+        stockDf = stock_info.get_data(ticker)
+        stockDf = stockDf.rename_axis("date").reset_index()
+        stockDf.to_csv(csvPath)
+        print(f"Querying Yahoo Finance and saving to {csvPath}\n")
+
+    stock_price = stockDf["adjclose"][-1:].values[0]
+    print("The price as of last close: " + str(stock_price))
+
+    # TODO: Just merge this into stockDf
+    dailyChanges = calculate(stockDf, 1, limit)
+    sorteddailyChanges = dailyChanges.sort_values(by=["percent_change"])
+    largestDailyChange = sorteddailyChanges.iloc[-1]
+
+    daily_mean_change = get_percent_change(dailyChanges)
+    weekly_mean_change = get_percent_change(calculate(stockDf, 5, limit))
+    monthly_mean_change = get_percent_change(calculate(stockDf, 20, limit))
+
+    daily_std_dev = std_dev(daily_mean_change)
+    weekly_std_dev = std_dev(weekly_mean_change)
+    monthly_std_dev = std_dev(monthly_mean_change)
+
+    num_trading_days = 252
+    num_weeks = 52
+    num_months = 12
+    daily_vol_annualised = daily_std_dev * math.sqrt(num_trading_days)
+    weekly_vol_annualised = weekly_std_dev * math.sqrt(num_weeks)
+    monthly_vol_annualised = monthly_std_dev * math.sqrt(num_months)
+
+    sigma_move = round(
+        (largestDailyChange["percent_change"] - average(daily_mean_change))
+        / daily_std_dev,
+        2,
+    )
+
+    print(sorteddailyChanges)
+
+    render(
+        ticker=ticker,
+        daily=average(daily_mean_change),
+        weekly=average(weekly_mean_change),
+        monthly=average(monthly_mean_change),
+        daily_std_dev=daily_std_dev,
+        weekly_std_dev=weekly_std_dev,
+        monthly_std_dev=monthly_std_dev,
+    )
+
+    print(
+        "The largest daily change was "
+        + str(largestDailyChange["percent_change"])
+        + "% on "
+        + str(
+            largestDailyChange["date"]
+            + " which was a "
+            + str(sigma_move)
+            + " sigma move"
+        )
+    )
+
+    axarr = dailyChanges.hist(
+        column="percent_change",
+        bins=100,
+        grid=False,
+        figsize=(12, 8),
+        color="#86bf91",
+        zorder=2,
+        rwidth=0.9,
+    )
+
+    for ax in axarr.flatten():
+        ax.set_title("Daily Volatility over the last " + str(limit) + " days")
+        ax.set_xlabel("Daily % Volatility")
+        ax.set_ylabel("Frequency")
+
+    ma_50 = moving_average(stockDf, 50)["MA 50"]
+    ma_200 = moving_average(stockDf, 200)["MA 200"]
+
+    print("\n50 day moving average: " + str(ma_50[-1:].values[0]))
+    print("200 day moving average: " + str(ma_200[-1:].values[0]))
+
+    print("\nAnnualised daily volatility: " + str(daily_vol_annualised))
+    print("Annualised weekly volatility: " + str(weekly_vol_annualised))
+    print("Annualised monthly volatility: " + str(monthly_vol_annualised))
+
+    return weekly_vol_annualised, stock_price, ma_200[-1:].values[0]
+
+
+weekly_vol_annualised, stock_price, ma_200 = run(ticker)
+index_weekly_vol_annualised, index_stock_price, index_ma_200 = run("SPY")
+
+to_lev_or_not_to_lev(
+    weekly_vol_annualised,
+    stock_price,
+    ma_200,
+    index_weekly_vol_annualised,
+    index_stock_price,
+    index_ma_200,
+)
+
+if graph:
+    plt.show()
