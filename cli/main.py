@@ -35,6 +35,9 @@ except:
     stockDf.to_csv(csvPath)
     print(f"Querying Yahoo Finance and saving to {csvPath}\n")
 
+stock_price = stockDf["adjclose"][-1:].values[0]
+print("The price as of last close: " + str(stock_price))
+
 # TODO: Just merge this into stockDf
 dailyChanges = calculate(stockDf, 1, limit)
 sorteddailyChanges = dailyChanges.sort_values(by=['percent_change'])
@@ -81,6 +84,14 @@ print("200 day moving average: " + str(ma_200[-1:].values[0]))
 print("\nAnnualised daily volatility: " + str(daily_vol_annualised))
 print("Annualised weekly volatility: " + str(weekly_vol_annualised))
 print("Annualised monthly volatility: " + str(monthly_vol_annualised))
+
+def to_lev_or_not_to_lev(weekly_vol_annualised, stock_price, ma_200):
+    print("\n")
+
+    # TODO: find relevant historical figure for tsla
+    return weekly_vol_annualised < 40 and stock_price > ma_200
+
+print(to_lev_or_not_to_lev(weekly_vol_annualised, stock_price, ma_200))
 
 if (graph): plt.show()
 
