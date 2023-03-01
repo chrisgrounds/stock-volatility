@@ -3,6 +3,7 @@ from datetime import datetime
 import argparse
 import matplotlib.pyplot as plt
 from yahoo_fin import stock_info
+import math
 
 from calculate import calculate
 from average import average
@@ -37,20 +38,27 @@ dailyChanges = calculate(stockDf, 1, limit)
 sorteddailyChanges = dailyChanges.sort_values(by=['percent_change'])
 largestDailyChange = sorteddailyChanges.iloc[-1]
 
-daily_vols = get_percent_change(dailyChanges)
-weekly_vols = get_percent_change(calculate(stockDf, 5, limit))
-monthly_vols = get_percent_change(calculate(stockDf, 20, limit))
+daily_mean_change = get_percent_change(dailyChanges)
+weekly_mean_change = get_percent_change(calculate(stockDf, 5, limit))
+monthly_mean_change = get_percent_change(calculate(stockDf, 20, limit))
 
-daily_std_dev = std_dev(daily_vols)
-weekly_std_dev = std_dev(weekly_vols)
-monthly_std_dev = std_dev(monthly_vols)
+daily_std_dev = std_dev(daily_mean_change)
+weekly_std_dev = std_dev(weekly_mean_change)
+monthly_std_dev = std_dev(monthly_mean_change)
 
-sigma_move = round((largestDailyChange["percent_change"] - average(daily_vols)) / daily_std_dev, 2)
+num_trading_days = 252
+num_weeks = 52
+num_months = 12
+daily_vol_annualised = daily_std_dev * math.sqrt(num_trading_days)
+weekly_vol_annualised = weekly_std_dev * math.sqrt(num_weeks)
+monthly_vol_annualised = monthly_std_dev * math.sqrt(num_months)
+
+sigma_move = round((largestDailyChange["percent_change"] - average(daily_mean_change)) / daily_std_dev, 2)
 
 print(sorteddailyChanges)
 
-render(ticker=ticker, daily=average(daily_vols), weekly=average(
-    weekly_vols), monthly=average(monthly_vols), daily_std_dev=daily_std_dev, 
+render(ticker=ticker, daily=average(daily_mean_change), weekly=average(
+    weekly_mean_change), monthly=average(monthly_mean_change), daily_std_dev=daily_std_dev, 
     weekly_std_dev=weekly_std_dev, monthly_std_dev=monthly_std_dev)
 
 print("The largest daily change was " + str(largestDailyChange["percent_change"]) + "% on " + str(largestDailyChange['date'] + " which was a " + str(sigma_move) + " sigma move"))
@@ -65,13 +73,14 @@ for ax in axarr.flatten():
 ma_50 = moving_average(stockDf, 50)["MA 50"]
 ma_200 = moving_average(stockDf, 200)["MA 200"]
 
-# print the last 5 days of the 50 and 200 day moving averages
-print("Last 5 days of 50 day moving average")
-print(ma_50[-5:])
-print("Last 5 days of 200 day moving average")
-print(ma_200[-5:])
+print("\n50 day moving average: " + str(ma_50[-1:].values[0]))
+print("200 day moving average: " + str(ma_200[-1:].values[0]))
 
-plt.show()
+print("\nAnnualised daily volatility: " + str(daily_vol_annualised))
+print("Annualised weekly volatility: " + str(weekly_vol_annualised))
+print("Annualised monthly volatility: " + str(monthly_vol_annualised))
+
+# plt.show()
 
 # https://arxiv.org/pdf/1103.5672.pdf#:~:text=a%204%2Dsigma%20event%20is,in%20126%20years%20(!)%3B&text=a%205%2Dsigma%20event%20is,every%2013%2C932%20years(!!)
 # k Probability in any given day Expected occurrence: once in every
