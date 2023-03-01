@@ -31,6 +31,7 @@ def format_emoji(x):
 
 
 def to_lev_or_not_to_lev(
+    ticker,
     weekly_vol_annualised,
     stock_price,
     ma_200,
@@ -48,16 +49,16 @@ def to_lev_or_not_to_lev(
     above_ma_200 = stock_price > ma_200
 
     print(
-        f"index_vol_annualised_below_40: {format_emoji(index_vol_annualised_below_40)}",
+        f"Index Annualised Vol Below 40: {format_emoji(index_vol_annualised_below_40)}",
     )
     print(
-        f"index_above_ma_200: {format_emoji(index_above_ma_200)}",
+        f"Index above 200-day MA: {format_emoji(index_above_ma_200)}",
     )
     print(
-        f"vol_annualised_below_60: {format_emoji(vol_annualised_below_40)}",
+        f"{ticker} annualised Vol Below 60: {format_emoji(vol_annualised_below_40)}",
     )
     print(
-        f"above_ma_200: {format_emoji(above_ma_200)}",
+        f"{ticker} above 200-day MA: {format_emoji(above_ma_200)}",
     )
 
 
@@ -74,8 +75,8 @@ def run(ticker):
         stockDf.to_csv(csvPath)
         print(f"[---] Querying Yahoo Finance and saving to {csvPath}\n")
 
-    stock_price = stockDf["adjclose"][-1:].values[0]
-    print(f"[{ticker}] The price as of last close: ${str(round(stock_price, 2))}")
+    stock_price = stock_info.get_live_price(ticker)
+    print(f"[{ticker}] price: ${str(round(stock_price, 2))}")
 
     # TODO: Just merge this into stockDf
     dailyChanges = calculate(stockDf, 1, limit)
@@ -111,7 +112,7 @@ def run(ticker):
     )
 
     print(
-        "[{ticker}] The largest daily change was "
+        f"[{ticker}] The largest daily change was "
         + str(round(largestDailyChange["percent_change"], 2))
         + "% on "
         + str(
@@ -155,6 +156,7 @@ weekly_vol_annualised, stock_price, ma_200 = run(ticker)
 index_weekly_vol_annualised, index_stock_price, index_ma_200 = run("SPY")
 
 to_lev_or_not_to_lev(
+    ticker,
     weekly_vol_annualised,
     stock_price,
     ma_200,

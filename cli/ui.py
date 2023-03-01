@@ -4,8 +4,7 @@ def render(
     weekly_std_dev=0,
     monthly_std_dev=0,
 ):
-    print(f"\n{ticker} Standard Deviation")
-    print("(68%, 95%, 99.7%)")
+    print(f"\n[{ticker}] Standard deviations (68%, 95%, 99.7%)")
     print(
         f"[{ticker}] Daily 1σ: {daily_std_dev}%, 2σ: {round(daily_std_dev * 2, 2)}%, 3σ: {round(daily_std_dev * 3, 2)}%"
     )
