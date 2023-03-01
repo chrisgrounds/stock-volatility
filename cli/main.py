@@ -15,10 +15,12 @@ from moving_average import moving_average
 parser = argparse.ArgumentParser()
 parser.add_argument("--ticker")
 parser.add_argument("--limit", type=int)
+parser.add_argument("--graph")
 args = parser.parse_args()
 
 ticker = args.ticker
 limit = args.limit
+graph = args.graph
 
 csvPath = f"./../data/{ticker}-{datetime.today().strftime('%Y-%m-%d')}.csv"
 
@@ -80,7 +82,7 @@ print("\nAnnualised daily volatility: " + str(daily_vol_annualised))
 print("Annualised weekly volatility: " + str(weekly_vol_annualised))
 print("Annualised monthly volatility: " + str(monthly_vol_annualised))
 
-# plt.show()
+if (graph): plt.show()
 
 # https://arxiv.org/pdf/1103.5672.pdf#:~:text=a%204%2Dsigma%20event%20is,in%20126%20years%20(!)%3B&text=a%205%2Dsigma%20event%20is,every%2013%2C932%20years(!!)
 # k Probability in any given day Expected occurrence: once in every
