@@ -86,7 +86,7 @@ def run(ticker):
         print(f"[---] Querying Yahoo Finance and saving to {csvPath}\n")
 
     stock_price = stock_info.get_live_price(ticker)
-    print(f"[{ticker}] price: ${str(round(stock_price, 2))}")
+    print(f"[{ticker}] Price: ${str(round(stock_price, 2))}")
 
     # TODO: Just merge this into stockDf
     dailyChanges = calculate(stockDf, 1, limit)
