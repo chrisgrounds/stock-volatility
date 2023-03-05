@@ -36,21 +36,27 @@ def to_lev_or_not_to_lev(
     stock_price,
     ma_50,
     ma_200,
+    ma_304,
     index_weekly_vol_annualised,
     index_stock_price,
     index_ma_50,
     index_ma_200,
+    index_ma_304,
 ):
     print("\n-- Leverage Decision Maker --")
 
     index_vol_annualised_below_40 = index_weekly_vol_annualised <= 40
     index_above_ma_200 = index_stock_price > index_ma_200
+    index_above_ma_304 = index_stock_price > index_ma_304
     index_crossover_200_50 = index_ma_50 > index_ma_200
+    index_crossover_304_50 = index_ma_50 > index_ma_304
 
     # TODO: find relevant historical figure for ticker/tsla
     vol_annualised_below_40 = weekly_vol_annualised <= 60
     above_ma_200 = stock_price > ma_200
+    above_ma_304 = stock_price > ma_304
     crossover_200_50 = ma_50 > ma_200
+    crossover_304_50 = ma_50 > ma_304
 
     print(
         f"Index Annualised Vol Below 40: {format_emoji(index_vol_annualised_below_40)}",
@@ -59,7 +65,13 @@ def to_lev_or_not_to_lev(
         f"Index above 200-day MA: {format_emoji(index_above_ma_200)}",
     )
     print(
+        f"Index above 304-day (10 month) MA: {format_emoji(index_above_ma_304)}",
+    )
+    print(
         f"Index 200/50 Crossover (50 MA > 200 MA): {format_emoji(index_crossover_200_50)}",
+    )
+    print(
+        f"Index 304/50 Crossover (50 MA > 304 MA (10 month)): {format_emoji(index_crossover_304_50)}",
     )
     print(
         f"{ticker} annualised Vol Below 60: {format_emoji(vol_annualised_below_40)}",
@@ -68,7 +80,13 @@ def to_lev_or_not_to_lev(
         f"{ticker} above 200-day MA: {format_emoji(above_ma_200)}",
     )
     print(
+        f"{ticker} above 304-day (10 month) MA: {format_emoji(above_ma_304)}",
+    )
+    print(
         f"{ticker} 200/50 Crossover (50 MA > 200 MA): {format_emoji(crossover_200_50)}",
+    )
+    print(
+        f"{ticker} 304/50 Crossover (50 MA > 304 MA (10 month)): {format_emoji(crossover_304_50)}",
     )
 
 
@@ -149,24 +167,27 @@ def run(ticker):
 
     ma_50 = round(moving_average(stockDf, 50)["MA 50"][-1:].values[0], 2)
     ma_200 = round(moving_average(stockDf, 200)["MA 200"][-1:].values[0], 2)
+    ma_304 = round(moving_average(stockDf, 304)["MA 304"][-1:].values[0], 2)  # 10 month
 
     print(f"\n[{ticker}] 50 day moving average: {str(ma_50)}")
     print(f"[{ticker}] 200 day moving average: {str(ma_200)}")
+    print(f"[{ticker}] 304 day (10 month) moving average: {str(ma_304)}")
 
     print(f"\n[{ticker}] Annualised daily volatility: {str(daily_vol_annualised)}%")
     print(f"[{ticker}] Annualised weekly volatility: {str(weekly_vol_annualised)}%")
     print(f"[{ticker}] Annualised monthly volatility: {str(monthly_vol_annualised)}%")
 
-    return (
-        weekly_vol_annualised,
-        stock_price,
-        ma_50,
-        ma_200,
-    )
+    return (weekly_vol_annualised, stock_price, ma_50, ma_200, ma_304)
 
 
-weekly_vol_annualised, stock_price, ma_50, ma_200 = run(ticker)
-index_weekly_vol_annualised, index_stock_price, index_ma_50, index_ma_200 = run("SPY")
+weekly_vol_annualised, stock_price, ma_50, ma_200, ma_304 = run(ticker)
+(
+    index_weekly_vol_annualised,
+    index_stock_price,
+    index_ma_50,
+    index_ma_200,
+    index_ma_304,
+) = run("SPY")
 
 to_lev_or_not_to_lev(
     ticker,
@@ -174,10 +195,12 @@ to_lev_or_not_to_lev(
     stock_price,
     ma_50,
     ma_200,
+    ma_304,
     index_weekly_vol_annualised,
     index_stock_price,
     index_ma_50,
     index_ma_200,
+    index_ma_304,
 )
 
 if graph:
