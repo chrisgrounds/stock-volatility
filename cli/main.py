@@ -59,19 +59,19 @@ def to_lev_or_not_to_lev(
     crossover_304_50 = ma_50 > ma_304
 
     print(
-        f"Index Annualised Vol Below 40: {format_emoji(index_vol_annualised_below_40)}",
+        f"SPY Annualised Vol Below 40: {format_emoji(index_vol_annualised_below_40)}",
     )
     print(
-        f"Index above 200-day MA: {format_emoji(index_above_ma_200)}",
+        f"SPY above 200-day MA: {format_emoji(index_above_ma_200)}",
     )
     print(
-        f"Index above 304-day (10 month) MA: {format_emoji(index_above_ma_304)}",
+        f"SPY above 304-day (10 month) MA: {format_emoji(index_above_ma_304)}",
     )
     print(
-        f"Index 200/50 Crossover (50 MA > 200 MA): {format_emoji(index_crossover_200_50)}",
+        f"SPY 200/50 Crossover (50 MA > 200 MA): {format_emoji(index_crossover_200_50)}",
     )
     print(
-        f"Index 304/50 Crossover (50 MA > 304 MA (10 month)): {format_emoji(index_crossover_304_50)}",
+        f"SPY 304/50 Crossover (50 MA > 304 MA (10 month)): {format_emoji(index_crossover_304_50)}",
     )
     print(
         f"{ticker} annualised Vol Below 60: {format_emoji(vol_annualised_below_40)}",
