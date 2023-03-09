@@ -9,14 +9,14 @@ def strategy_buy_and_hold(
     previous_tsla_count,
     previous_3x_count,
     previous_neg_3x_count,
+    cash_balance,
 ):
-    total_value = (
-        previous_tsla_count * row["adjclose"]
-        + previous_3x_count * price_3x_long
-        + previous_neg_3x_count * price_3x_short
-    )
-    new_tsla_count = previous_tsla_count
-    new_3x_count = previous_3x_count
-    new_neg_3x_count = previous_neg_3x_count
+    total_value = previous_tsla_count * row["adjclose"]
 
-    return new_tsla_count, new_3x_count, new_neg_3x_count, total_value
+    return (
+        previous_tsla_count,
+        previous_3x_count,
+        previous_neg_3x_count,
+        cash_balance,
+        total_value,
+    )

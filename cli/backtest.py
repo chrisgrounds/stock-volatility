@@ -12,6 +12,7 @@ from backtest_state import IS_LONG, IS_SHORT, GO_LONG, GO_SHORT, NOT_ENOUGH_DATA
 from strategy_3x_neg_3x_with_dma import strategy_3x_neg_3x_with_dma
 from strategy_3x_with_dma import strategy_3x_with_dma
 from strategy_buy_and_hold import strategy_buy_and_hold
+from strategy_3x_with_dma_cash_when_short import strategy_3x_with_dma_cash_when_short
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--ticker")
@@ -72,6 +73,7 @@ def run(strategy_label, strategy, ticker="TSLA"):
             "tsla": [initial_investment / stockDf["adjclose"].iloc[0]],
             "3x": [0],
             "-3x": [0],
+            "cash_balance": [0],
             "total_value": [initial_investment],
             "state": [NOT_ENOUGH_DATA],
         }
@@ -88,6 +90,7 @@ def run(strategy_label, strategy, ticker="TSLA"):
         previous_3x_count = portfolio["3x"].iloc[-1]
         previous_neg_3x_count = portfolio["-3x"].iloc[-1]
         todays_close = row["adjclose"]
+        cash_balance = portfolio["cash_balance"].iloc[-1]
 
         if index >= 1:
             comparison_price = stockDf.iloc[index - 1]["adjclose"]
@@ -113,6 +116,7 @@ def run(strategy_label, strategy, ticker="TSLA"):
             new_tsla_count,
             new_3x_count,
             new_neg_3x_count,
+            cash_balance,
             total_value,
         ) = strategy(
             current_state,
@@ -122,6 +126,7 @@ def run(strategy_label, strategy, ticker="TSLA"):
             previous_tsla_count,
             previous_3x_count,
             previous_neg_3x_count,
+            cash_balance,
         )
 
         portfolio = pd.concat(
@@ -129,13 +134,13 @@ def run(strategy_label, strategy, ticker="TSLA"):
                 portfolio,
                 pd.DataFrame(
                     data={
-                        # "date": [dt.datetime.strptime(row["date"], "%Y-%m-%d")],
                         "date": [row["date"]],
                         "tsla_price": [row["adjclose"]],
                         "dma": [dma],
                         "tsla": [new_tsla_count],
                         "3x": [new_3x_count],
                         "-3x": [new_neg_3x_count],
+                        "cash_balance": [cash_balance],
                         "total_value": [total_value],
                         "state": [current_state],
                     }
@@ -157,8 +162,6 @@ def run(strategy_label, strategy, ticker="TSLA"):
     plt.gca().xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m"))
     plt.gca().xaxis.set_major_locator(mdates.AutoDateLocator())
 
-    # plt.gca().yaxis.set_major_formatter(mdates.StrMethodFormatter("${x:,.0f}"))
-
     plt.plot(portfolio["date"], portfolio["total_value"], label=strategy_label)
     plt.gcf().autofmt_xdate()
 
@@ -167,6 +170,9 @@ def run(strategy_label, strategy, ticker="TSLA"):
 
 portfolio1 = run("buy and hold", strategy_buy_and_hold)
 portfolio2 = run("3x with DMA", strategy_3x_with_dma)
+portfolio2 = run(
+    "3x with DMA and cash when short", strategy_3x_with_dma_cash_when_short
+)
 portfolio3 = run("3x and -3x with DMA", strategy_3x_neg_3x_with_dma)
 
 CB91_Blue = "#2CBDFE"
@@ -203,5 +209,5 @@ ax.yaxis.set_ticks(
 )
 
 plt.legend()
+plt.savefig("./../data/backtest/tsla-strategies.png")
 plt.show()
-plt.savefig("data/backtest/tsla-strategies.png")

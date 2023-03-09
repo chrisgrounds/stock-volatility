@@ -9,6 +9,7 @@ def strategy_3x_neg_3x_with_dma(
     previous_tsla_count,
     previous_3x_count,
     previous_neg_3x_count,
+    cash_balance,
 ):
     total_value = (
         previous_tsla_count * row["adjclose"]
@@ -28,4 +29,4 @@ def strategy_3x_neg_3x_with_dma(
         new_3x_count = previous_3x_count
         new_neg_3x_count = previous_neg_3x_count
 
-    return new_tsla_count, new_3x_count, new_neg_3x_count, total_value
+    return new_tsla_count, new_3x_count, new_neg_3x_count, cash_balance, total_value
