@@ -164,9 +164,12 @@ def run(strategy_label, strategy, ticker="TSLA"):
         portfolio.round({"tsla": 2, "3x": 2, "-3x": 2, "total_value": 2})
         portfolio["date"] = pd.to_datetime(portfolio["date"], format="%Y-%m-%d")
         portfolio.to_csv(f"{portfolio_csv_path}-{strategy_label}-{dma_period}dma.csv")
-        portfolios.append(
-            {"portfolio": portfolio, "label": f"{strategy_label}-{dma_period}dma"}
+        label = (
+            strategy_label
+            if strategy_label == "buy and hold"
+            else f"{strategy_label}-{dma_period}dma"
         )
+        portfolios.append({"portfolio": portfolio, "label": label})
         print(
             f"[info] Saving portfolio backtest to {portfolio_csv_path}-{strategy_label}-{dma_period}dma.csv\n"
         )
