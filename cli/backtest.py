@@ -61,12 +61,10 @@ def run(strategy_label, strategy, ticker="TSLA"):
 
     try:
         stockDf = pd.read_csv(csvPath)
-        print(f"\n[info] Reading from CSV {csvPath}\n")
     except:
         stockDf = stock_info.get_data(ticker)
         stockDf = stockDf.rename_axis("date").reset_index()
         stockDf.to_csv(csvPath)
-        print(f"[info] Querying Yahoo Finance and saving to {csvPath}\n")
 
     data = stockDf[-1000:]
     portfolios = []
