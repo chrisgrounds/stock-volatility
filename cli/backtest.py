@@ -22,7 +22,7 @@ args = parser.parse_args()
 
 
 portfolio_csv_path = f"./../data/backtest/TSLA"
-dma_periods = [50, 100, 200, 304]
+dma_periods = [50, 100, 200]
 initial_investment = 100
 
 
@@ -69,31 +69,35 @@ def run(strategy_label, strategy, ticker="TSLA"):
         stockDf.to_csv(csvPath)
         print(f"[info] Querying Yahoo Finance and saving to {csvPath}\n")
 
-    portfolio = pd.DataFrame(
-        data={
-            "date": ["start"],
-            "tsla_price": [stockDf["adjclose"].iloc[0]],
-            "dma": [0],
-            "tsla": [initial_investment / stockDf["adjclose"].iloc[0]],
-            "3x": [0],
-            "-3x": [0],
-            "cash_balance": [0],
-            "total_value": [initial_investment],
-            "state": [NOT_ENOUGH_DATA],
-        }
-    )
+    data = stockDf[-1250:]
+    portfolios = []
+
+    if strategy_label == "buy and hold":
+        dma_periods = [200]
 
     for dma_period in dma_periods:
         index = 0
-        data = stockDf[-1250:]
         price_3x_long = 100
         price_3x_short = 100
         current_state = NOT_ENOUGH_DATA
         comparison_price = None
-        portfolios = []
+
+        portfolio = pd.DataFrame(
+            data={
+                "date": ["start"],
+                "tsla_price": [data["adjclose"].iloc[0]],
+                "dma": [0],
+                "tsla": [initial_investment / data["adjclose"].iloc[0]],
+                "3x": [0],
+                "-3x": [0],
+                "cash_balance": [0],
+                "total_value": [initial_investment],
+                "state": [NOT_ENOUGH_DATA],
+            }
+        )
 
         for row in data.itertuples():
-            previous_data = stockDf[:index]
+            previous_data = data[:index]
             previous_tsla_count = portfolio["tsla"].iloc[-1]
             previous_3x_count = portfolio["3x"].iloc[-1]
             previous_neg_3x_count = portfolio["-3x"].iloc[-1]
@@ -161,34 +165,53 @@ def run(strategy_label, strategy, ticker="TSLA"):
 
         portfolio = portfolio[1:]
         portfolio.round({"tsla": 2, "3x": 2, "-3x": 2, "total_value": 2})
+        portfolio["date"] = pd.to_datetime(portfolio["date"], format="%Y-%m-%d")
         portfolio.to_csv(f"{portfolio_csv_path}-{strategy_label}-{dma_period}dma.csv")
-
+        portfolios.append(
+            {"portfolio": portfolio, "label": f"{strategy_label}-{dma_period}dma"}
+        )
         print(
             f"[info] Saving portfolio backtest to {portfolio_csv_path}-{strategy_label}-{dma_period}dma.csv\n"
         )
 
-        portfolio["date"] = pd.to_datetime(portfolio["date"], format="%Y-%m-%d")
-        portfolios.append(portfolio)
-
-        plt.gca().xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m"))
-        plt.gca().xaxis.set_major_locator(mdates.AutoDateLocator())
-
-        plt.plot(
-            portfolio["date"],
-            portfolio["total_value"],
-            label=f"{strategy_label}-{dma_period}dma",
-        )
-        plt.gcf().autofmt_xdate()
-
     return portfolios
 
 
-portfolio1 = run("buy and hold", strategy_buy_and_hold)
-portfolio2 = run("3x with DMA", strategy_3x_with_dma)
-portfolio3 = run(
-    "3x with DMA and cash when short", strategy_3x_with_dma_cash_when_short
-)
-portfolio4 = run("3x and -3x with DMA", strategy_3x_neg_3x_with_dma)
+portfolios = [
+    run("buy and hold", strategy_buy_and_hold),
+    run("3x with DMA", strategy_3x_with_dma),
+    run("3x with DMA and cash when short", strategy_3x_with_dma_cash_when_short),
+    run("3x and -3x with DMA", strategy_3x_neg_3x_with_dma),
+]
+
+top_five_portfolios = []
+
+for portfolio in portfolios:
+    for p in portfolio:
+        port = p["portfolio"]
+        # if final total value is in the top 5 then add to top_five_portfolios
+        if len(top_five_portfolios) < 5:
+            top_five_portfolios.append(p)
+        else:
+            for i, top_portfolio in enumerate(top_five_portfolios):
+                if (
+                    top_portfolio["portfolio"]["total_value"].iloc[-1]
+                    < port["total_value"].iloc[-1]
+                ):
+                    top_five_portfolios[i] = p
+                    break
+
+for portfolio in top_five_portfolios:
+    print(portfolio["label"])
+    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m"))
+    plt.gca().xaxis.set_major_locator(mdates.AutoDateLocator())
+
+    plt.plot(
+        portfolio["portfolio"]["date"],
+        portfolio["portfolio"]["total_value"],
+        label=portfolio["label"],
+    )
+    plt.gcf().autofmt_xdate()
 
 CB91_Blue = "#2CBDFE"
 CB91_Green = "#47DBCD"
@@ -196,7 +219,6 @@ CB91_Pink = "#F3A0F2"
 CB91_Purple = "#9D2EC5"
 CB91_Violet = "#661D98"
 CB91_Amber = "#F5B14C"
-
 
 color_list = [
     CB91_Blue,
@@ -209,9 +231,10 @@ color_list = [
     "#ff0000",
     "#00ff00",
     "#0000ff",
-    "#ff3333",
-    "#ffff00",
+    "#bbff00",
     "#ff6600",
+    "#A504DE",
+    "#05C6FF",
 ]
 plt.rcParams["axes.prop_cycle"] = plt.cycler(color=color_list)
 
@@ -225,20 +248,21 @@ ax.get_xaxis().tick_bottom()
 ax.get_yaxis().tick_left()
 ax.yaxis.set_major_formatter("${x}")
 
+highest_total_value = 0
+for i, portfolio in enumerate(top_five_portfolios):
+    highest_total_value = max(
+        highest_total_value, portfolio["portfolio"]["total_value"].iloc[-1]
+    )
+
 ax.set_title("TSLA Strategies", color=CB91_Blue)
 ax.yaxis.set_ticks(
     np.arange(
         0,
-        130000,
-        # max(
-        #     max(portfolio1["total_value"]),
-        #     max(portfolio2["total_value"]),
-        #     max(portfolio3["total_value"]),
-        #     max(portfolio4["total_value"]),
-        # ),
+        highest_total_value,
         10000,
     )
 )
+
 
 plt.legend()
 plt.savefig("./../data/backtest/tsla-strategies.png")
