@@ -14,14 +14,17 @@ from strategy_3x_with_dma import strategy_3x_with_dma
 from strategy_buy_and_hold import strategy_buy_and_hold
 from strategy_3x_with_dma_cash_when_short import strategy_3x_with_dma_cash_when_short
 
-parser = argparse.ArgumentParser()
-parser.add_argument("--ticker")
-parser.add_argument("--limit", type=int)
-parser.add_argument("--graph")
-args = parser.parse_args()
+
+def round6(number):
+    return round(number, 6)
+
 
 portfolio_csv_path = f"./../data/backtest/TSLA"
 initial_investment = 100
+annual_management_fee = 0.75
+fed_funds_rate = 4
+annual_leverage_cost = annual_management_fee + fed_funds_rate + 1.5
+daily_leverage_cost = round6(annual_leverage_cost / 365) / 100
 
 
 def calc_is_above_dma(row, dma):
@@ -31,12 +34,12 @@ def calc_is_above_dma(row, dma):
         return NOT_ENOUGH_DATA
 
 
+def apply_leverage_cost(price):
+    return price * (1 - daily_leverage_cost)
+
+
 def calculate_leverage(price, percent_change, leverage):
     return price * (1 + (percent_change * leverage))
-
-
-def round2(number):
-    return round(number, 2)
 
 
 def change_state(current_state, is_above_dma, date=None):
@@ -99,14 +102,18 @@ def run(strategy_label, strategy, ticker="TSLA"):
             previous_tsla_count = portfolio["tsla"].iloc[-1]
             previous_3x_count = portfolio["3x"].iloc[-1]
             previous_neg_3x_count = portfolio["-3x"].iloc[-1]
-            todays_close = round2(row.adjclose)
+            todays_close = round6(row.adjclose)
             cash_balance = portfolio["cash_balance"].iloc[-1]
 
-            comparison_price = round2(data.iloc[contraIndex]["adjclose"])
+            comparison_price = round6(data.iloc[contraIndex]["adjclose"])
             percent_change = (todays_close / comparison_price) - 1
 
-            price_3x_long = calculate_leverage(price_3x_long, percent_change, 3)
-            price_3x_short = calculate_leverage(price_3x_short, percent_change, -3)
+            price_3x_long = apply_leverage_cost(
+                calculate_leverage(price_3x_long, percent_change, 3)
+            )
+            price_3x_short = apply_leverage_cost(
+                calculate_leverage(price_3x_short, percent_change, -3)
+            )
 
             dma_series = previous_data["adjclose"].rolling(dma_period).mean()[-1:]
 
