@@ -20,9 +20,7 @@ parser.add_argument("--limit", type=int)
 parser.add_argument("--graph")
 args = parser.parse_args()
 
-
 portfolio_csv_path = f"./../data/backtest/TSLA"
-dma_periods = [50, 100, 200]
 initial_investment = 100
 
 
@@ -57,6 +55,7 @@ def change_state(current_state, is_above_dma, date=None):
 
 
 def run(strategy_label, strategy, ticker="TSLA"):
+    dma_periods = [50, 100, 200]
     stockDf = None
     csvPath = f"./../data/{ticker}-{datetime.today().strftime('%Y-%m-%d')}.csv"
 
@@ -69,14 +68,14 @@ def run(strategy_label, strategy, ticker="TSLA"):
         stockDf.to_csv(csvPath)
         print(f"[info] Querying Yahoo Finance and saving to {csvPath}\n")
 
-    data = stockDf[-1250:]
+    data = stockDf[-1000:]
     portfolios = []
 
     if strategy_label == "buy and hold":
         dma_periods = [200]
 
     for dma_period in dma_periods:
-        index = 0
+        index = -1000
         price_3x_long = 100
         price_3x_short = 100
         current_state = NOT_ENOUGH_DATA
@@ -96,20 +95,17 @@ def run(strategy_label, strategy, ticker="TSLA"):
             }
         )
 
-        for row in data.itertuples():
-            previous_data = data[:index]
+        contraIndex = 0
+        for row in data[1:].itertuples():
+            previous_data = stockDf[:index]
             previous_tsla_count = portfolio["tsla"].iloc[-1]
             previous_3x_count = portfolio["3x"].iloc[-1]
             previous_neg_3x_count = portfolio["-3x"].iloc[-1]
             todays_close = round2(row.adjclose)
             cash_balance = portfolio["cash_balance"].iloc[-1]
 
-            if index >= 1:
-                comparison_price = round2(data.iloc[index - 1]["adjclose"])
-
-            percent_change = 0
-            if comparison_price != None:
-                percent_change = (todays_close / comparison_price) - 1
+            comparison_price = round2(data.iloc[contraIndex]["adjclose"])
+            percent_change = (todays_close / comparison_price) - 1
 
             price_3x_long = calculate_leverage(price_3x_long, percent_change, 3)
             price_3x_short = calculate_leverage(price_3x_short, percent_change, -3)
@@ -162,6 +158,7 @@ def run(strategy_label, strategy, ticker="TSLA"):
             )
 
             index += 1
+            contraIndex += 1
 
         portfolio = portfolio[1:]
         portfolio.round({"tsla": 2, "3x": 2, "-3x": 2, "total_value": 2})
@@ -189,7 +186,6 @@ top_five_portfolios = []
 for portfolio in portfolios:
     for p in portfolio:
         port = p["portfolio"]
-        # if final total value is in the top 5 then add to top_five_portfolios
         if len(top_five_portfolios) < 5:
             top_five_portfolios.append(p)
         else:
@@ -202,7 +198,6 @@ for portfolio in portfolios:
                     break
 
 for portfolio in top_five_portfolios:
-    print(portfolio["label"])
     plt.gca().xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m"))
     plt.gca().xaxis.set_major_locator(mdates.AutoDateLocator())
 
@@ -243,7 +238,7 @@ ax.yaxis.set_major_formatter("${x}")
 highest_total_value = 0
 for i, portfolio in enumerate(top_five_portfolios):
     highest_total_value = max(
-        highest_total_value, portfolio["portfolio"]["total_value"].iloc[-1]
+        highest_total_value, max(portfolio["portfolio"]["total_value"])
     )
 
 ax.set_title("TSLA Strategies", color=CB91_Blue)
@@ -251,7 +246,7 @@ ax.yaxis.set_ticks(
     np.arange(
         0,
         highest_total_value,
-        10000,
+        1000,
     )
 )
 
