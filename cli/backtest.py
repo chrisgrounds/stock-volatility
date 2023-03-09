@@ -36,7 +36,7 @@ def calculate_leverage(price, percent_change, leverage):
     return price * (1 + (percent_change * leverage))
 
 
-def change_state(current_state, is_above_dma):
+def change_state(current_state, is_above_dma, date=None):
     if is_above_dma == NOT_ENOUGH_DATA:
         return NOT_ENOUGH_DATA
 
@@ -79,6 +79,8 @@ def run(strategy_label, strategy, ticker="TSLA"):
 
     price_3x_long = 100
     price_3x_short = 100
+    current_state = NOT_ENOUGH_DATA
+    comparison_price = None
 
     for index, row in stockDf.iterrows():
         previous_data = stockDf[:index]
@@ -86,8 +88,6 @@ def run(strategy_label, strategy, ticker="TSLA"):
         previous_3x_count = portfolio["3x"].iloc[-1]
         previous_neg_3x_count = portfolio["-3x"].iloc[-1]
         todays_close = row["adjclose"]
-        comparison_price = None
-        current_state = NOT_ENOUGH_DATA
 
         if index >= 1:
             comparison_price = stockDf.iloc[index - 1]["adjclose"]
@@ -107,7 +107,7 @@ def run(strategy_label, strategy, ticker="TSLA"):
 
         is_above_dma = calc_is_above_dma(row, dma)
 
-        current_state = change_state(current_state, is_above_dma)
+        current_state = change_state(current_state, is_above_dma, row["date"])
 
         (
             new_tsla_count,
@@ -204,3 +204,4 @@ ax.yaxis.set_ticks(
 
 plt.legend()
 plt.show()
+plt.savefig("data/backtest/tsla-strategies.png")
