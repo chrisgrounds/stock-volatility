@@ -5,5 +5,5 @@
 ![Screenshot](./data/backtest/tsla-strategies.png)
 
 ```python
-python3 ./main.py TSLA
+python .\main.py --ticker TSLA --limit 1000
 ```
