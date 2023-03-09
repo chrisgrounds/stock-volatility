@@ -100,10 +100,12 @@ def run(ticker):
             ax.set_ylabel("Frequency")
 
     ma_50 = round(moving_average(stockDf, 50)["MA 50"][-1:].values[0], 2)
+    ma_100 = round(moving_average(stockDf, 100)["MA 100"][-1:].values[0], 2)
     ma_200 = round(moving_average(stockDf, 200)["MA 200"][-1:].values[0], 2)
     ma_304 = round(moving_average(stockDf, 304)["MA 304"][-1:].values[0], 2)  # 10 month
 
     print(f"\n[{ticker}] 50 day moving average: {str(ma_50)}")
+    print(f"[{ticker}] 100 day moving average: {str(ma_100)}")
     print(f"[{ticker}] 200 day moving average: {str(ma_200)}")
     print(f"[{ticker}] 304 day (10 month) moving average: {str(ma_304)}")
 
@@ -111,14 +113,15 @@ def run(ticker):
     print(f"[{ticker}] Annualised weekly volatility: {str(weekly_vol_annualised)}%")
     print(f"[{ticker}] Annualised monthly volatility: {str(monthly_vol_annualised)}%")
 
-    return (weekly_vol_annualised, stock_price, ma_50, ma_200, ma_304)
+    return (weekly_vol_annualised, stock_price, ma_50, ma_100, ma_200, ma_304)
 
 
-weekly_vol_annualised, stock_price, ma_50, ma_200, ma_304 = run(ticker)
+weekly_vol_annualised, stock_price, ma_50, ma_100, ma_200, ma_304 = run(ticker)
 (
     index_weekly_vol_annualised,
     index_stock_price,
     index_ma_50,
+    index_ma_100,
     index_ma_200,
     index_ma_304,
 ) = run("SPY")
@@ -128,6 +131,7 @@ to_lev_or_not_to_lev(
     weekly_vol_annualised,
     stock_price,
     ma_50,
+    ma_100,
     ma_200,
     ma_304,
     index_weekly_vol_annualised,
