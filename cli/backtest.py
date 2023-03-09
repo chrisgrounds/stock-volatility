@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from yahoo_fin import stock_info
 import datetime as dt
+import matplotlib.ticker as plticker
+import numpy as np
 
 from backtest_state import IS_LONG, IS_SHORT, GO_LONG, GO_SHORT, NOT_ENOUGH_DATA
 from strategy_3x_neg_3x_with_dma import strategy_3x_neg_3x_with_dma
@@ -19,7 +21,7 @@ args = parser.parse_args()
 
 
 portfolio_csv_path = f"./../data/backtest/TSLA.csv"
-dma_period = 304
+dma_period = 200
 initial_investment = 100
 
 
@@ -152,22 +154,53 @@ def run(strategy_label, strategy, ticker="TSLA"):
 
     portfolio["date"] = pd.to_datetime(portfolio["date"], format="%Y-%m-%d")
 
-    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m-%d"))
+    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m"))
     plt.gca().xaxis.set_major_locator(mdates.AutoDateLocator())
+
+    # plt.gca().yaxis.set_major_formatter(mdates.StrMethodFormatter("${x:,.0f}"))
+
     plt.plot(portfolio["date"], portfolio["total_value"], label=strategy_label)
     plt.gcf().autofmt_xdate()
 
-
-run("buy and hold", strategy_buy_and_hold)
-run("3x with DMA", strategy_3x_with_dma)
-run("3x and -3x with DMA", strategy_3x_neg_3x_with_dma)
+    return portfolio
 
 
-for ax in plt.gcf().axes:
-    ax.set_title("TSLA Strategies", color="C0")
-    ax.get_lines()[0].set_color("#4C4CB2")
-    ax.get_lines()[1].set_color("#fcba03")
-    ax.get_lines()[2].set_color("#3FBFBF")
+portfolio1 = run("buy and hold", strategy_buy_and_hold)
+portfolio2 = run("3x with DMA", strategy_3x_with_dma)
+portfolio3 = run("3x and -3x with DMA", strategy_3x_neg_3x_with_dma)
+
+CB91_Blue = "#2CBDFE"
+CB91_Green = "#47DBCD"
+CB91_Pink = "#F3A0F2"
+CB91_Purple = "#9D2EC5"
+CB91_Violet = "#661D98"
+CB91_Amber = "#F5B14C"
+
+color_list = [CB91_Blue, CB91_Pink, CB91_Green, CB91_Amber, CB91_Purple, CB91_Violet]
+plt.rcParams["axes.prop_cycle"] = plt.cycler(color=color_list)
+
+ax = plt.subplot(111)
+ax.spines["top"].set_visible(False)
+ax.spines["bottom"].set_visible(False)
+ax.spines["right"].set_visible(False)
+ax.spines["left"].set_visible(False)
+
+ax.get_xaxis().tick_bottom()
+ax.get_yaxis().tick_left()
+ax.yaxis.set_major_formatter("${x}")
+
+ax.set_title("TSLA Strategies", color=CB91_Blue)
+ax.yaxis.set_ticks(
+    np.arange(
+        0,
+        max(
+            max(portfolio1["total_value"]),
+            max(portfolio2["total_value"]),
+            max(portfolio3["total_value"]),
+        ),
+        2500,
+    )
+)
 
 plt.legend()
 plt.show()
