@@ -227,14 +227,6 @@ color_list = [
     CB91_Amber,
     CB91_Purple,
     CB91_Violet,
-    "#DBFF33",
-    "#ff0000",
-    "#00ff00",
-    "#0000ff",
-    "#bbff00",
-    "#ff6600",
-    "#A504DE",
-    "#05C6FF",
 ]
 plt.rcParams["axes.prop_cycle"] = plt.cycler(color=color_list)
 
