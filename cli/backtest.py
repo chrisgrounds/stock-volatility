@@ -21,20 +21,24 @@ parser.add_argument("--graph")
 args = parser.parse_args()
 
 
-portfolio_csv_path = f"./../data/backtest/TSLA.csv"
-dma_period = 200
+portfolio_csv_path = f"./../data/backtest/TSLA"
+dma_periods = [50, 100, 200, 304]
 initial_investment = 100
 
 
 def calc_is_above_dma(row, dma):
     if dma != None:
-        return row["adjclose"] > dma
+        return row.adjclose > dma
     else:
         return NOT_ENOUGH_DATA
 
 
 def calculate_leverage(price, percent_change, leverage):
     return price * (1 + (percent_change * leverage))
+
+
+def round2(number):
+    return round(number, 2)
 
 
 def change_state(current_state, is_above_dma, date=None):
@@ -79,101 +83,112 @@ def run(strategy_label, strategy, ticker="TSLA"):
         }
     )
 
-    price_3x_long = 100
-    price_3x_short = 100
-    current_state = NOT_ENOUGH_DATA
-    comparison_price = None
+    for dma_period in dma_periods:
+        index = 0
+        data = stockDf[-1250:]
+        price_3x_long = 100
+        price_3x_short = 100
+        current_state = NOT_ENOUGH_DATA
+        comparison_price = None
+        portfolios = []
 
-    for index, row in stockDf.iterrows():
-        previous_data = stockDf[:index]
-        previous_tsla_count = portfolio["tsla"].iloc[-1]
-        previous_3x_count = portfolio["3x"].iloc[-1]
-        previous_neg_3x_count = portfolio["-3x"].iloc[-1]
-        todays_close = row["adjclose"]
-        cash_balance = portfolio["cash_balance"].iloc[-1]
+        for row in data.itertuples():
+            previous_data = stockDf[:index]
+            previous_tsla_count = portfolio["tsla"].iloc[-1]
+            previous_3x_count = portfolio["3x"].iloc[-1]
+            previous_neg_3x_count = portfolio["-3x"].iloc[-1]
+            todays_close = round2(row.adjclose)
+            cash_balance = portfolio["cash_balance"].iloc[-1]
 
-        if index >= 1:
-            comparison_price = stockDf.iloc[index - 1]["adjclose"]
+            if index >= 1:
+                comparison_price = round2(data.iloc[index - 1]["adjclose"])
 
-        percent_change = 0
-        if comparison_price != None:
-            percent_change = (todays_close / comparison_price) - 1
+            percent_change = 0
+            if comparison_price != None:
+                percent_change = (todays_close / comparison_price) - 1
 
-        price_3x_long = calculate_leverage(price_3x_long, percent_change, 3)
-        price_3x_short = calculate_leverage(price_3x_short, percent_change, -3)
+            price_3x_long = calculate_leverage(price_3x_long, percent_change, 3)
+            price_3x_short = calculate_leverage(price_3x_short, percent_change, -3)
 
-        dma_series = previous_data["adjclose"].rolling(dma_period).mean()[-1:]
+            dma_series = previous_data["adjclose"].rolling(dma_period).mean()[-1:]
 
-        dma = None
-        if not dma_series.isna().all():
-            dma = round(dma_series.values[0], 2)
+            dma = None
+            if not dma_series.isna().all():
+                dma = round(dma_series.values[0], 2)
 
-        is_above_dma = calc_is_above_dma(row, dma)
+            is_above_dma = calc_is_above_dma(row, dma)
 
-        current_state = change_state(current_state, is_above_dma, row["date"])
+            current_state = change_state(current_state, is_above_dma, row.date)
 
-        (
-            new_tsla_count,
-            new_3x_count,
-            new_neg_3x_count,
-            cash_balance,
-            total_value,
-        ) = strategy(
-            current_state,
-            row,
-            price_3x_long,
-            price_3x_short,
-            previous_tsla_count,
-            previous_3x_count,
-            previous_neg_3x_count,
-            cash_balance,
+            (
+                new_tsla_count,
+                new_3x_count,
+                new_neg_3x_count,
+                cash_balance,
+                total_value,
+            ) = strategy(
+                current_state,
+                row,
+                price_3x_long,
+                price_3x_short,
+                previous_tsla_count,
+                previous_3x_count,
+                previous_neg_3x_count,
+                cash_balance,
+            )
+
+            portfolio = pd.concat(
+                [
+                    portfolio,
+                    pd.DataFrame(
+                        data={
+                            "date": [row.date],
+                            "tsla_price": [row.adjclose],
+                            "dma": [dma],
+                            "tsla": [new_tsla_count],
+                            "3x": [new_3x_count],
+                            "-3x": [new_neg_3x_count],
+                            "cash_balance": [cash_balance],
+                            "total_value": [total_value],
+                            "state": [current_state],
+                        }
+                    ),
+                ],
+                join="inner",
+            )
+
+            index += 1
+
+        portfolio = portfolio[1:]
+        portfolio.round({"tsla": 2, "3x": 2, "-3x": 2, "total_value": 2})
+        portfolio.to_csv(f"{portfolio_csv_path}-{strategy_label}-{dma_period}dma.csv")
+
+        print(
+            f"[info] Saving portfolio backtest to {portfolio_csv_path}-{strategy_label}-{dma_period}dma.csv\n"
         )
 
-        portfolio = pd.concat(
-            [
-                portfolio,
-                pd.DataFrame(
-                    data={
-                        "date": [row["date"]],
-                        "tsla_price": [row["adjclose"]],
-                        "dma": [dma],
-                        "tsla": [new_tsla_count],
-                        "3x": [new_3x_count],
-                        "-3x": [new_neg_3x_count],
-                        "cash_balance": [cash_balance],
-                        "total_value": [total_value],
-                        "state": [current_state],
-                    }
-                ),
-            ],
-            join="inner",
+        portfolio["date"] = pd.to_datetime(portfolio["date"], format="%Y-%m-%d")
+        portfolios.append(portfolio)
+
+        plt.gca().xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m"))
+        plt.gca().xaxis.set_major_locator(mdates.AutoDateLocator())
+
+        plt.plot(
+            portfolio["date"],
+            portfolio["total_value"],
+            label=f"{strategy_label}-{dma_period}dma",
         )
+        plt.gcf().autofmt_xdate()
 
-    portfolio = portfolio[1:]
-    portfolio.round({"tsla": 2, "3x": 2, "-3x": 2, "total_value": 2})
-    portfolio.to_csv(f"{portfolio_csv_path}-{strategy_label}.csv")
-
-    print(
-        f"[info] Saving portfolio backtest to {portfolio_csv_path}-{strategy_label}.csv\n"
-    )
-
-    portfolio["date"] = pd.to_datetime(portfolio["date"], format="%Y-%m-%d")
-
-    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m"))
-    plt.gca().xaxis.set_major_locator(mdates.AutoDateLocator())
-
-    plt.plot(portfolio["date"], portfolio["total_value"], label=strategy_label)
-    plt.gcf().autofmt_xdate()
-
-    return portfolio
+    return portfolios
 
 
 portfolio1 = run("buy and hold", strategy_buy_and_hold)
 portfolio2 = run("3x with DMA", strategy_3x_with_dma)
-portfolio2 = run(
+portfolio3 = run(
     "3x with DMA and cash when short", strategy_3x_with_dma_cash_when_short
 )
-portfolio3 = run("3x and -3x with DMA", strategy_3x_neg_3x_with_dma)
+portfolio4 = run("3x and -3x with DMA", strategy_3x_neg_3x_with_dma)
 
 CB91_Blue = "#2CBDFE"
 CB91_Green = "#47DBCD"
@@ -182,7 +197,22 @@ CB91_Purple = "#9D2EC5"
 CB91_Violet = "#661D98"
 CB91_Amber = "#F5B14C"
 
-color_list = [CB91_Blue, CB91_Pink, CB91_Green, CB91_Amber, CB91_Purple, CB91_Violet]
+
+color_list = [
+    CB91_Blue,
+    CB91_Pink,
+    CB91_Green,
+    CB91_Amber,
+    CB91_Purple,
+    CB91_Violet,
+    "#DBFF33",
+    "#ff0000",
+    "#00ff00",
+    "#0000ff",
+    "#ff3333",
+    "#ffff00",
+    "#ff6600",
+]
 plt.rcParams["axes.prop_cycle"] = plt.cycler(color=color_list)
 
 ax = plt.subplot(111)
@@ -199,12 +229,14 @@ ax.set_title("TSLA Strategies", color=CB91_Blue)
 ax.yaxis.set_ticks(
     np.arange(
         0,
-        max(
-            max(portfolio1["total_value"]),
-            max(portfolio2["total_value"]),
-            max(portfolio3["total_value"]),
-        ),
-        2500,
+        130000,
+        # max(
+        #     max(portfolio1["total_value"]),
+        #     max(portfolio2["total_value"]),
+        #     max(portfolio3["total_value"]),
+        #     max(portfolio4["total_value"]),
+        # ),
+        10000,
     )
 )
 

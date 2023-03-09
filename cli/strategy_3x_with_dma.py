@@ -12,7 +12,7 @@ def strategy_3x_with_dma(
     cash_balance,
 ):
     total_value = (
-        previous_tsla_count * row["adjclose"]
+        previous_tsla_count * row.adjclose
         + previous_3x_count * price_3x_long
         + previous_neg_3x_count * price_3x_short
     )
@@ -21,7 +21,7 @@ def strategy_3x_with_dma(
         new_3x_count = total_value / price_3x_long
         new_neg_3x_count = 0
     elif current_state == GO_SHORT:
-        new_tsla_count = total_value / row["adjclose"]
+        new_tsla_count = total_value / row.adjclose
         new_3x_count = 0
         new_neg_3x_count = 0
     else:

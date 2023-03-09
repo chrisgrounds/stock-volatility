@@ -11,7 +11,7 @@ def strategy_buy_and_hold(
     previous_neg_3x_count,
     cash_balance,
 ):
-    total_value = previous_tsla_count * row["adjclose"]
+    total_value = previous_tsla_count * row.adjclose
 
     return (
         previous_tsla_count,

@@ -12,7 +12,7 @@ def strategy_3x_with_dma_cash_when_short(
     cash_balance,
 ):
     total_value = (
-        previous_tsla_count * row["adjclose"]
+        previous_tsla_count * row.adjclose
         + previous_3x_count * price_3x_long
         + previous_neg_3x_count * price_3x_short
         + cash_balance
