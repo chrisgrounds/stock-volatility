@@ -13,6 +13,7 @@ from strategy_3x_neg_3x_with_dma import strategy_3x_neg_3x_with_dma
 from strategy_3x_with_dma import strategy_3x_with_dma
 from strategy_buy_and_hold import strategy_buy_and_hold
 from strategy_3x_with_dma_cash_when_short import strategy_3x_with_dma_cash_when_short
+from strategy_3x_only import strategy_3x_only
 
 
 def round6(number):
@@ -187,6 +188,7 @@ portfolios = [
     run("3x with DMA", strategy_3x_with_dma),
     run("3x with DMA and cash when short", strategy_3x_with_dma_cash_when_short),
     run("3x and -3x with DMA", strategy_3x_neg_3x_with_dma),
+    run("3x only", strategy_3x_only),
 ]
 
 top_five_portfolios = []
