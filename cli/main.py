@@ -137,6 +137,7 @@ to_lev_or_not_to_lev(
     index_weekly_vol_annualised,
     index_stock_price,
     index_ma_50,
+    index_ma_100,
     index_ma_200,
     index_ma_304,
 )
